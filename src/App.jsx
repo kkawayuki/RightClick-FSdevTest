@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import "./App.css";
-import customerObj from "./data/customers.json"; //import json file as object
 
 //global Objects from which to gather data
 import customerData from "./data/customers.json";
@@ -73,9 +72,7 @@ function EquipmentList() {
                             <td>{item.brand ?? "n/a"}</td>
                             <td>{item.modelNumber ?? "n/a"}</td>
                             <td>
-                                {item.baseCost
-                                    ? `$${item.baseCost.toLocaleString()}`
-                                    : "n/a"}
+                                ${item.baseCost ?? item.base_cost}.00
                             </td>
                         </tr>
                     ))}
@@ -122,13 +119,13 @@ function LaborRatesList() {
 }
 
 function TotalCostCalculator() {
-    const [inputId, setInputId] = useState(""); //for customer input
-    const [equipmentId, setEquipmentId] = useState(""); //for equipment input
+    const [inputId, setInputId] = useState("");                     //for customer input
+    const [equipmentId, setEquipmentId] = useState("");             //for equipment input
     const [selectedCustomer, setSelectedCustomer] = useState(null); //for customer object
-    const [selectedServices, setSelectedServices] = useState([]); //for selection service(s)
+    const [selectedServices, setSelectedServices] = useState([]);   //for selection service(s)
     const [selectedEquipment, setSelectedEquipment] = useState([]); //for equipment object
 
-    //2d arr to determine divisor of SQFT
+    //2d arr to determine divisor of SQFT in labor hour calculations
     const timeConstants = {
         diagnostic: { standard: 2000, complex: 1500 },
         repair: { standard: 2000, complex: 1500 },
@@ -142,6 +139,9 @@ function TotalCostCalculator() {
 
         if (found) {
             setSelectedCustomer(found);
+            setEquipmentId("");
+            setSelectedServices([]);
+            setSelectedEquipment([]);
         } else {
             alert("Customer Id not found!");
             setSelectedCustomer(null);
@@ -169,15 +169,13 @@ function TotalCostCalculator() {
         const found = equipmentData.find((e) => e.id === equipmentId.trim());
 
         if (found) {
-            // Correct way to update an array state:
             setSelectedEquipment((prev) => [...prev, found]);
-            setEquipmentId("");
         } else {
             alert("Equipment Id not found!");
         }
     };
 
-    // This runs on every re-render
+    // Price calculation on re-render
     let runningTotal = 0;
     let totalEstimatedHours = 0;
     let equipmentSubtotal = 0;
@@ -233,7 +231,7 @@ function TotalCostCalculator() {
             {selectedCustomer && (
                 <div className="ResultArea">
                     <div className="CustomerInfo FieldArea">
-                        <h3>Quote for: {selectedCustomer.name}</h3>
+                        <h2>Quote for: {selectedCustomer.name}</h2>
                         <p>
                             Property Type:{" "}
                             {selectedCustomer.propertyType ??
@@ -243,9 +241,9 @@ function TotalCostCalculator() {
                     </div>
 
                     <div className="ServiceOptions FieldArea">
-                        <h3>Select Services:</h3>
+                        <h2>Select Services:</h2>
+                        <p><i>Note: additional context required for installation</i></p>
                         {laborRatesData.map((service) => {
-                            // Unique Id for each combination
                             const isChecked = selectedServices.some(
                                 (s) =>
                                     s.jobType === service.jobType &&
@@ -289,7 +287,7 @@ function TotalCostCalculator() {
                         (service) => service.jobType === "install",
                     ) && (
                         <div className="EquipmentOptions FieldArea">
-                            <h3>Add Installed Equipment</h3>
+                            <h2>Add Installed Equipment</h2>
                             <p>
                                 <i>
                                     Using the equipment's "Id" prefix, eg: EQ001
@@ -308,7 +306,7 @@ function TotalCostCalculator() {
                     )}
 
                     <div className="QuoteSummary FieldArea">
-                        <h3>Quote Summary</h3>
+                        <h2>Quote Summary</h2>
 
                         {/* Added Equipment */}
                         {selectedEquipment.length > 0 && (
@@ -348,15 +346,13 @@ function TotalCostCalculator() {
 function App() {
     return (
         <>
-            <h1>Price Calculation Tool</h1>
+            <h1>HVAC Price Estimation Tool</h1>
             <p>
                 This web-hosted tool should help speed up the quote process for
                 HVAC technicians
             </p>
 
             <TotalCostCalculator />
-
-            <h2>Database Reference Tables:</h2>
             <CustomerList />
             <EquipmentList />
             <LaborRatesList />
